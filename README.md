@@ -1,6 +1,6 @@
 # Chatbot with Gemini API
 
-A basic chatbot interface made in Sveltekit to ['Gemini API'](https://ai.google.dev/). A password (specified in .env) must be given before allowing access. Uses JWT for basic stateless authentication.
+A basic chatbot interface made in Sveltekit to ['Gemini API'](https://ai.google.dev/). A password (specified in .env) must be given before allowing access. Uses JWT for basic stateless sessioning.
 
 
 ## Deploying
