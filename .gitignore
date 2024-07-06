@@ -6,6 +6,10 @@ node_modules
 /.svelte-kit
 /build
 
+# Notes
+.changes
+.todo
+
 # OS
 .DS_Store
 Thumbs.db

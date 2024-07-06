@@ -60,18 +60,15 @@
     text = "";
     is_loading = true
 
-    try {
-      let res = await post("/api/ask", json)
-      if (res.ok) {
-        let {text} = await res.json()
-        add_conversation(text)
-      } else if (res.status == 401)
-        add_conversation("Not authenticated")
-
-      is_loading = false  
-    } catch {
+    let res = await post("/api/ask", json)
+    if (res.ok) 
+      add_conversation( (await res.json()).text )
+    else if (res.status == 401) 
+      add_conversation("Not authenticated")
+    else 
       add_conversation("Something went wrong")
-    }
+
+    is_loading = false
   }
 
   async function on_form_submit_login(ev: SubmitEvent) {
@@ -118,12 +115,13 @@
   <main bind:this={main} class="bg-bg h-full grow p-4 w-full flex flex-col 
     gap-4 overflow-y-scroll">
     {#each conversation as c, idx}
-      <div class="prose prose-invert rounded-sm px-2 max-w-[80vw] 
+      {@const is_user = idx % 2 == 0}
+      {@const user_styles = "text-right self-end border-primary shadow-primary"}
+      {@const ai_styles = "text-left self-start border-secondary shadow-secondary"}
+      <div class="prose prose-invert rounded-sm px-2 py-1 max-w-[80vw] 
         border shadow 
         scroll-m-2
-        {idx%2==0 ? 
-        'text-right self-end border-primary shadow-primary':
-        'text-left self-start border-secondary shadow-secondary'}">
+        {is_user ? user_styles : ai_styles}">
         {@html c}
       </div>
     {/each}
