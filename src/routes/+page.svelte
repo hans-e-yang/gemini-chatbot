@@ -51,7 +51,7 @@
     if (text == "") return
 
     let json = {
-      conversation: history.slice(-20),
+      history: history.slice(-20),
       text
     }
 
