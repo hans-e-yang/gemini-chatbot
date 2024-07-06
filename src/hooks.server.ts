@@ -1,4 +1,4 @@
-import { SECRET } from '$env/static/private'
+import { env } from '$env/dynamic/private'
 import { error, type Handle } from '@sveltejs/kit'
 import jwt from 'jsonwebtoken'
 
@@ -7,7 +7,7 @@ export const handle : Handle = async ({event, resolve}) => {
   const token = event.cookies.get('token')
   if (token) {
     try {
-      jwt.verify(token, SECRET)
+      jwt.verify(token, env.SECRET)
       is_authenticated = true
     } catch (_) {/* Just ignore this, means token has failed */}
   }

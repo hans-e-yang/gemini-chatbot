@@ -1,11 +1,12 @@
 import jwt from 'jsonwebtoken'
 
-import { API_KEY, SECRET, PASSWORD } from "$env/static/private";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { env } from "$env/dynamic/private"
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad, RequestEvent } from '@sveltejs/kit';
 
-const genAI = new GoogleGenerativeAI(API_KEY)
+import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from "@google/generative-ai";
+const genAI = new GoogleGenerativeAI(env.API_KEY)
+
 const model = genAI.getGenerativeModel({model: "gemini-1.5-flash"})
 
 export const load : PageServerLoad = ({locals}) => {
@@ -16,17 +17,18 @@ export const load : PageServerLoad = ({locals}) => {
 
 
 
+// Unused for now..
 export const actions = {
   // Checks password. 
   // Request should be a FormData containing 'password'
   login: async ({request, cookies}: RequestEvent) => {
     // Check if password is correct
     const data = await request.formData()
-    if (data.get('password') !== PASSWORD) 
+    if (data.get('password') !== env.PASSWORD) 
       error(401)
     
     // Send credentials
-    const token = jwt.sign({}, SECRET, {expiresIn: '1h'})
+    const token = jwt.sign({}, env.SECRET, {expiresIn: '1h'})
     cookies.set("token", token, {path: '/'})
   },
 
@@ -46,10 +48,12 @@ export const actions = {
       error(422)
 
     // Call GEMINI API
-    const result = await model.generateContent(conversation + prompt)
+    const result = await model.generateContent(conversation + prompt,
+      
+    )
     const text = result.response.text()
 
-    return { success: true, text }
+    return { success: true, text}
   }
 }
 

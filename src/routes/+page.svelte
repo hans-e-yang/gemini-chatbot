@@ -8,15 +8,28 @@
 
   /** Current chat the user is texting */
   let text = ""
+  /** History to be sent to backend */
+  let history = [] as string[]
 
-  /** Chats from the start of the conversation */
+  /** Chats from the start of the conversation in html */
   let conversation = [] as string[]
 
   /** Adds a sanitized and parsed text to conversation */
   async function add_conversation(text: string) {
+    history.push(text)
     text = await marked.parse(text.replace(/^[\u200B\u200C\u200D\u200E\u200F\uFEFF]/,""))
     conversation.push(DOMPurify.sanitize(text))
     conversation = conversation
+  }
+
+  function post(route: string, json: any) {
+    return fetch(route, {
+      method: "POST",
+      headers: {
+        'content-type': "application/json"
+      },
+      body: JSON.stringify(json)
+    })
   }
 
   // Similar behaviour to poe.com
@@ -34,10 +47,12 @@
     }
   }
 
-  const on_form_submit_ask : SubmitFunction = ({cancel, formData})=> {
-    if (text == "") {
-      cancel()
-      return
+  async function on_form_submit_ask(ev: SubmitEvent) {
+    if (text == "") return
+
+    let json = {
+      conversation: history.slice(-20),
+      text
     }
 
     // Add the chat into the conversation
@@ -45,66 +60,73 @@
     text = "";
     is_loading = true
 
-    // Also send conversations to add history
-    formData.append("conversation", conversation.slice(-20).join('.'))
-
-    return async ({result}) => {
-      // Remove loading screen
-      is_loading = false
-      // Add conversation based on results
-      if (result.type == "success"){
-        //@ts-ignore
-        add_conversation(result.data.text)
-      } else {
-        add_conversation("Not Authenticated")
-      }
+    let res = await post("/api/ask", json)
+    if (res.ok) {
+      let {text} = await res.json()
+      add_conversation(text)
     }
+    else
+      add_conversation("Not authenticated")
+    is_loading = false  
   }
 
-  const on_form_submit_login : SubmitFunction = ({cancel, formData}) => {
-    if (!formData.get('password')) {
-      cancel()
-      return
-    }
+  async function on_form_submit_login(ev: SubmitEvent) {
+    let form_data = new FormData(ev.currentTarget as HTMLFormElement)
+    if (!form_data.get('password')) return
 
-    return ({result}) => {
-      if (result.type == "success")
-        data.is_authenticated = true
-    }
-
+    let res = await post("/api/login", 
+      {password: form_data.get("password")})
+    data.is_authenticated = res.ok
   }
 
   let is_loading = false
+
+  // Auto scroll when chat and response
+  let main : HTMLElement
+  $: if (conversation && main?.children.length > 0) {
+    setTimeout(() => {
+      main.children[main.children.length-2].scrollIntoView({behavior: "smooth"})
+    }, 0)
+  }
 </script>
 
-<div class="flex flex-col h-screen">
-  <header class="flex justify-center p-4 bg-cyan-400">
+<div class="flex flex-col h-screen bg-bg text-text">
+  <header class="flex justify-center p-4 border-b border-primary 
+                 shadow-md shadow-primary relative z-10">
     <h1 class="text-xl font-bold">Google Gemini Chatbot</h1>
   </header>
 
   {#if !data.is_authenticated}
-    <div class="flex flex-col items-center bg-cyan-400">
+    <div class="flex flex-col items-center border-b border-secondary py-4">
       <p>This website uses cookies to store authentication.</p>
-      <form method="post" action="?/login" use:enhance={on_form_submit_login} class="flex w-full items-center space-between p-4 gap-2">
+      <form method="post" on:submit|preventDefault={on_form_submit_login}
+        class="flex w-full items-center space-between p-4 gap-2">
         <label>
           <span>Password: </span>
           <input type="password" name="password">
         </label>
-        <button class="btn">Submit</button>
+        <button class="btn btn-primary">Submit</button>
       </form>
     </div>
   {/if}
 
   <!-- Chat logs in this session -->
-  <main class="h-full grow p-4 w-full flex flex-col gap-4 overflow-y-scroll">
+  <main bind:this={main} class="bg-bg h-full grow p-4 w-full flex flex-col 
+    gap-4 overflow-y-scroll">
     {#each conversation as c, idx}
-      <div class="prose rounded-sm px-2 max-w-[80vw] {idx%2==0?'text-right bg-cyan-400 self-end':'text-left bg-slate-300 self-start'}">
+      <div class="prose prose-invert rounded-sm px-2 max-w-[80vw] 
+        border shadow 
+        scroll-m-2
+        {idx%2==0 ? 
+        'text-right self-end border-primary shadow-primary':
+        'text-left self-start border-secondary shadow-secondary'}">
         {@html c}
       </div>
     {/each}
     
     {#if is_loading}
-      <div class="rounded-sm px-2 max-w-[80vw] self-start text-left bg-slate-300 flex gap-2">
+      <div class="rounded-sm px-2 max-w-[80vw] self-start text-left 
+        flex gap-2 border border-secondary shadow shadow-secondary">
         <p>Loading Response...</p>
         <p class="animate-spin ">0</p>
       </div>
@@ -112,16 +134,15 @@
   </main>
 
   <!-- Chat interface -->
-  <form method="post" action="?/ask" bind:this={form_element}
-    use:enhance={on_form_submit_ask}
-    class="flex justify-between p-4 bg-cyan-400"
+  <form method="post" bind:this={form_element}
+    on:submit|preventDefault={on_form_submit_ask}
+    class="flex justify-between p-4 border-t border-primary"
   > 
     <label class='flex w-full items-center gap-2 pr-4'>
       <span>Prompt: </span>
-      <textarea class="grow p-1 resize-none focus:outline-none focus:ring focus:ring-rose-500" rows="3" name="prompt" bind:value={text}
-        on:keypress={on_form_keydown}
+      <textarea class="grow p-1 resize-none" rows="3" name="prompt" bind:value={text}
+        on:keypress={on_form_keydown} disabled={is_loading}
       />
-    <button class="btn">Submit</button>
+    <button class="btn btn-primary">Submit</button>
   </form>
 </div>
-

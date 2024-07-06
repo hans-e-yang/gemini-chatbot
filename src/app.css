@@ -3,12 +3,26 @@
 @tailwind utilities;
 
 @layer base {
+  * {
+    
+  }
+  input, textarea {
+    @apply bg-bg-700 border border-primary focus:outline-none focus:ring 
+      focus:ring-primary px-1
+  }
   
 }
 
 @layer components {
   .btn {
-    @apply bg-pink-300 p-2 border border-black
+    @apply p-2 rounded-md bg-bg border transition-all
+    hover:text-bg 
+    focus:outline-none focus:ring 
+  }
+
+  .btn-primary {
+    @apply border-primary hover:bg-primary 
+      focus:ring-primary 
   }
 }
 
