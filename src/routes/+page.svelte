@@ -60,14 +60,18 @@
     text = "";
     is_loading = true
 
-    let res = await post("/api/ask", json)
-    if (res.ok) {
-      let {text} = await res.json()
-      add_conversation(text)
+    try {
+      let res = await post("/api/ask", json)
+      if (res.ok) {
+        let {text} = await res.json()
+        add_conversation(text)
+      } else if (res.status == 401)
+        add_conversation("Not authenticated")
+
+      is_loading = false  
+    } catch {
+      add_conversation("Something went wrong")
     }
-    else
-      add_conversation("Not authenticated")
-    is_loading = false  
   }
 
   async function on_form_submit_login(ev: SubmitEvent) {
