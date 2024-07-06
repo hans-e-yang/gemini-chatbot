@@ -7,9 +7,11 @@ A basic chatbot interface made in Sveltekit to ['Gemini API'](https://ai.google.
 1. Copy this directory
 2. Run `npm install`
 3. Fill in the Environment Variables
+```env
 API_KEY=<Your-Google-Gemini-API-KEY>
 PASSWORD=<Password>
 SECRET=<JWT-Secret>
+```
 
 ## Removing Password Requirement
 If you want to enable access to the chatbot interface without needing to provide a password, one possible method is to change the following function in src/hooks.server.ts.
