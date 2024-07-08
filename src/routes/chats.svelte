@@ -1,8 +1,21 @@
 <script lang="ts">
+
 	import DOMPurify from "dompurify";
-  import { marked } from "marked";
+  import { Marked } from "marked";
+  import { markedHighlight } from "marked-highlight";
+  import hljs from "highlight.js";
+
   import type {Chat} from "$lib/types"
 
+  let marked = new Marked(
+    markedHighlight({
+      langPrefix: 'hljs language-',
+      highlight(code, lang, info) {
+        const language = hljs.getLanguage(lang) ? lang : "plaintext"
+        return hljs.highlight(code, {language}).value
+      }
+    })
+  )
 
   export let chats : Chat[]
 
