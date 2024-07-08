@@ -4,6 +4,7 @@ import { error, json } from "@sveltejs/kit";
 import { env } from "$env/dynamic/private";
 
 import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from "@google/generative-ai";
+import type { Chat } from "$lib/types";
 
 const genAI = new GoogleGenerativeAI(env.API_KEY)
 const safetySettings = [
@@ -28,16 +29,14 @@ export const POST : RequestHandler = async ({request, locals}) => {
 
   // Get the prompt and history
   const prompt = data.text
-  const history : string[] = data.history || []
+  const history : Chat[] = data.history || []
   // Perhaps more typechecking could be done.
   if (typeof prompt !== 'string') error(422)
   
   const chat = model.startChat({
-    history: history.map((text, index) => {
+    history: history.map(({role, text}) => {
       return {
-        // This could be change in the future. 
-        // Basing the role on index is simple but not very elegant
-        role: index%2==0 ? "user" : "model",
+        role,
         parts: [{text}]
       }
     })

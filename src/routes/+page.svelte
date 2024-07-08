@@ -1,26 +1,17 @@
 <script lang="ts">
-  import { enhance } from "$app/forms";
-	import type { SubmitFunction } from "@sveltejs/kit";
   import DOMPurify from 'dompurify'
   import {marked} from 'marked'
+	import Chats from './chats.svelte';
+  import type {Chat} from "$lib/types"
+	import type { HTMLTextareaAttributes } from 'svelte/elements';
 
   export let data
 
   /** Current chat the user is texting */
   let text = ""
-  /** History to be sent to backend */
-  let history = [] as string[]
 
   /** Chats from the start of the conversation in html */
-  let conversation = [] as string[]
-
-  /** Adds a sanitized and parsed text to conversation */
-  async function add_conversation(text: string) {
-    history.push(text)
-    text = await marked.parse(text.replace(/^[\u200B\u200C\u200D\u200E\u200F\uFEFF]/,""))
-    conversation.push(DOMPurify.sanitize(text))
-    conversation = conversation
-  }
+  let conversation = [] as Chat[]
 
   function post(route: string, json: any) {
     return fetch(route, {
@@ -35,6 +26,7 @@
   // Similar behaviour to poe.com
   // CTRL+Enter = newline
   // Enter = submit
+  // Move to seperate component
   let form_element : HTMLFormElement
   function on_form_keydown(ev: KeyboardEvent) {
     // CTRL + Enter
@@ -49,24 +41,29 @@
 
   async function on_form_submit_ask(ev: SubmitEvent) {
     if (text == "") return
+    if (is_loading) return
 
     let json = {
-      history: history.slice(-20),
+      history: conversation.filter(({role}) => role != "app"),
       text
     }
 
     // Add the chat into the conversation
-    add_conversation(text)
-    text = "";
     is_loading = true
+    conversation = [...conversation, {role: "user", text}]
+    text = "";
 
-    let res = await post("/api/ask", json)
-    if (res.ok) 
-      add_conversation( (await res.json()).text )
-    else if (res.status == 401) 
-      add_conversation("Not authenticated")
-    else 
-      add_conversation("Something went wrong")
+    try {
+      let res = await post("/api/ask", json)
+      if (res.ok) 
+        conversation = [...conversation, {role: "model", text: (await res.json()).text}]
+      else if (res.status == 401) 
+        conversation = [...conversation, {role: "app", text: "Not authenticated"}]
+      else 
+        conversation = [...conversation, {role: "app", text: "Something went wrong"}]
+    } catch (_) {
+      conversation = [...conversation, {role: "app", text: "Something went wrong"}]
+    }
 
     is_loading = false
   }
@@ -81,14 +78,6 @@
   }
 
   let is_loading = false
-
-  // Auto scroll when chat and response
-  let main : HTMLElement
-  $: if (conversation && main?.children.length > 0) {
-    setTimeout(() => {
-      main.children[main.children.length-2].scrollIntoView({behavior: "smooth"})
-    }, 0)
-  }
 </script>
 
 <div class="flex flex-col h-screen bg-bg text-text">
@@ -98,7 +87,7 @@
   </header>
 
   {#if !data.is_authenticated}
-    <div class="flex flex-col items-center border-b border-secondary py-4">
+    <div class="flex flex-col items-center border-b border-secondary p-4">
       <p>This website uses cookies to store authentication.</p>
       <form method="post" on:submit|preventDefault={on_form_submit_login}
         class="flex w-full items-center space-between p-4 gap-2">
@@ -112,19 +101,9 @@
   {/if}
 
   <!-- Chat logs in this session -->
-  <main bind:this={main} class="bg-bg h-full grow p-4 w-full flex flex-col 
+  <main class="bg-bg h-full grow p-4 w-full flex flex-col 
     gap-4 overflow-y-scroll">
-    {#each conversation as c, idx}
-      {@const is_user = idx % 2 == 0}
-      {@const user_styles = "text-right self-end border-primary shadow-primary"}
-      {@const ai_styles = "text-left self-start border-secondary shadow-secondary"}
-      <div class="prose prose-invert rounded-sm px-2 py-1 max-w-[80vw] 
-        border shadow 
-        scroll-m-2
-        {is_user ? user_styles : ai_styles}">
-        {@html c}
-      </div>
-    {/each}
+    <Chats chats={conversation} />
     
     {#if is_loading}
       <div class="rounded-sm px-2 max-w-[80vw] self-start text-left 
@@ -143,7 +122,7 @@
     <label class='flex w-full items-center gap-2 pr-4'>
       <span>Prompt: </span>
       <textarea class="grow p-1 resize-none" rows="3" name="prompt" bind:value={text}
-        on:keypress={on_form_keydown} disabled={is_loading}
+        on:keypress={on_form_keydown}
       />
     <button class="btn btn-primary">Submit</button>
   </form>
