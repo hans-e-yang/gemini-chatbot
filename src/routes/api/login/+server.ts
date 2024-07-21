@@ -11,7 +11,11 @@ export const POST : RequestHandler = async ({request, cookies}) => {
 
   // Send credentials
   // These will be checked in hook.ts
-  const token = jwt.sign({}, env.SECRET, {expiresIn: '1h'})
+  // The tokens only act as sessionless sessioning, so no db will be 
+  // needed
+  const token = jwt.sign({}, 
+                env.SECRET, 
+                {expiresIn: env.TOKEN_DURATION || '1h'})
   cookies.set("token", token, {path: '/'})
 
   return new Response()
