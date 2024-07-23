@@ -11,7 +11,7 @@ Gemini without needing to open [Google AI Studio](https://ai.google.dev/aistudio
 
 ## Running Locally
 0. Have [Nodejs](https://nodejs.org/en)
-1. Copy this directory
+1. Clone this repository
 2. Run `npm install`
 3. Fill in the Environment Variables
 ```env
@@ -24,7 +24,7 @@ TOKEN_DURATION=<JWT-ExpiresIn-Value>  (Defaults to '1hr')
 
 
 ## Hosting Serverless
-1. Copy this directory
+1. Clone this repository
 2. Host on Platforms such as [Netlify](https://www.netlify.com/) or 
     [Vercel](https://www.vercel.com/) ([See supported Environments](https://kit.svelte.dev/docs/adapter-auto))
 
