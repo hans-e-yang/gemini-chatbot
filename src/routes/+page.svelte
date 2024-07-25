@@ -57,8 +57,11 @@
       let res = await post("/api/ask", json)
       if (res.ok) 
         conversation = [...conversation, {role: "model", text: (await res.json()).text}]
-      else if (res.status == 401) 
-        conversation = [...conversation, {role: "app", text: "Not authenticated"}]
+      else if (res.status == 401) {
+          conversation = [...conversation, {role: "app", text: "Not authenticated"}]
+          data.is_authenticated = false;
+          console.log(data.is_authenticated)
+        }
       else 
         conversation = [...conversation, {role: "app", text: "Something went wrong"}]
     } catch (_) {

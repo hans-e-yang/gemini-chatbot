@@ -1,6 +1,6 @@
 import { type RequestHandler } from "@sveltejs/kit"
 import { env } from "$env/dynamic/private"
-import { error } from "@sveltejs/kit"
+import { error, json } from "@sveltejs/kit"
 import jwt from "jsonwebtoken"
 
 export const POST : RequestHandler = async ({request, cookies}) => {
