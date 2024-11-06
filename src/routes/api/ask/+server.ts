@@ -33,7 +33,7 @@ export const POST : RequestHandler = async ({request, locals}) => {
 
   // Call Together api
   const result = await together.chat.completions.create({
-    model: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+    model: env.MODEL || "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
     messages
   })
   for (const c of result.choices) {

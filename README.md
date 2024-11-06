@@ -18,6 +18,7 @@ API_KEY=<Your-Together-AI-API-KEY>
 PASSWORD=<Password>
 SECRET=<JWT-Secret>
 TOKEN_DURATION=<JWT-ExpiresIn-Value>  (Defaults to '1hr')
+MODEL=<CHAT-MODEL-SUPPORTED-BY-TOGETHER-AI> (Defaults to 'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo')
 ```
 4. Run `npm run dev`
 
