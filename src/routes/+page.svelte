@@ -1,9 +1,6 @@
 <script lang="ts">
-  import DOMPurify from 'dompurify'
-  import {marked} from 'marked'
 	import Chats from './chats.svelte';
   import type {Chat} from "$lib/types"
-	import type { HTMLTextareaAttributes } from 'svelte/elements';
 
   export let data
 
@@ -86,7 +83,7 @@
 <div class="flex flex-col h-screen bg-bg text-text">
   <header class="flex justify-center p-4 border-b border-primary 
                  shadow-md shadow-primary relative z-10">
-    <h1 class="text-xl font-bold">Google Gemini Chatbot</h1>
+    <h1 class="text-xl font-bold">TogetherAI Chatbot</h1>
   </header>
 
   {#if !data.is_authenticated}
